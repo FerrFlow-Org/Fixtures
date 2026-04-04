@@ -4,6 +4,12 @@ All notable changes to `fixtures` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.2.2] - 2026-04-04
+
+### Bug Fixes
+
+- fix: resolve ferrflow binary to absolute path before cd into fixtures (#18)
+
 ## [0.2.1] - 2026-04-04
 
 ### Bug Fixes
