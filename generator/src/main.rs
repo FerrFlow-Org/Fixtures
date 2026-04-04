@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 // ---------------------------------------------------------------------------
-// TOML definition types
+// Definition types
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize)]
@@ -299,7 +299,7 @@ fn main() -> Result<()> {
 
     let mut entries: Vec<_> = fs::read_dir(&defs_dir)?
         .filter_map(Result::ok)
-        .filter(|e| e.path().extension().is_some_and(|ext| ext == "toml"))
+        .filter(|e| e.path().extension().is_some_and(|ext| ext == "json"))
         .collect();
     entries.sort_by_key(|e| e.path());
 
@@ -359,7 +359,7 @@ fn generate_fixture(def_path: &Path, output_dir: &Path) -> Result<()> {
     let content = fs::read_to_string(def_path)
         .with_context(|| format!("reading {}", def_path.display()))?;
     let def: FixtureDef =
-        toml::from_str(&content).with_context(|| format!("parsing {}", def_path.display()))?;
+        serde_json::from_str(&content).with_context(|| format!("parsing {}", def_path.display()))?;
 
     if def.generate.is_some() {
         generate_bulk(&def, output_dir)
