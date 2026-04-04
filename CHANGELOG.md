@@ -4,6 +4,12 @@ All notable changes to `fixtures` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.2.1] - 2026-04-04
+
+### Bug Fixes
+
+- fix: add workspace marker to prevent parent workspace detection (#17)
+
 ## [0.2.0] - 2026-04-04
 
 ### Features
