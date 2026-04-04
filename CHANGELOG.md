@@ -4,6 +4,12 @@ All notable changes to `fixtures` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-04-04
+
+### Features
+
+- feat: make config field optional for tool-agnostic fixture generation (#26)
+
 ## [0.4.0] - 2026-04-04
 
 ### Features
