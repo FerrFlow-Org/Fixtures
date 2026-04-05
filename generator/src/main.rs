@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use git2::{FileMode, Oid, Repository, Signature, Time};
+use git2::{FileMode, Oid, Repository, RepositoryInitOptions, Signature, Time};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
@@ -33,6 +33,8 @@ struct Meta {
     #[allow(dead_code)]
     name: String,
     description: String,
+    #[serde(default)]
+    default_branch: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -373,7 +375,7 @@ fn generate_fixture(def_path: &Path, output_dir: &Path) -> Result<()> {
 fn generate_explicit(def: &FixtureDef, output_dir: &Path) -> Result<()> {
     fs::create_dir_all(output_dir)?;
 
-    let repo = Repository::init(output_dir)?;
+    let repo = init_repo(output_dir, def.meta.default_branch.as_deref())?;
     {
         let mut config = repo.config()?;
         config.set_str("user.name", "Test")?;
@@ -469,7 +471,7 @@ fn generate_bulk(def: &FixtureDef, output_dir: &Path) -> Result<()> {
 
     fs::create_dir_all(output_dir)?;
 
-    let repo = Repository::init(output_dir)?;
+    let repo = init_repo(output_dir, def.meta.default_branch.as_deref())?;
     let mut b = BulkRepoBuilder::new();
     let mut rng = Rng::new(gen.seed);
     let now = chrono::Utc::now().timestamp();
@@ -552,6 +554,17 @@ fn generate_bulk(def: &FixtureDef, output_dir: &Path) -> Result<()> {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+fn init_repo(path: &Path, default_branch: Option<&str>) -> Result<Repository> {
+    match default_branch {
+        Some(branch) => {
+            let mut opts = RepositoryInitOptions::new();
+            opts.initial_head(branch);
+            Ok(Repository::init_opts(path, &opts)?)
+        }
+        None => Ok(Repository::init(path)?),
+    }
+}
 
 fn resolve_config_filename(config: &ConfigDef) -> String {
     config.filename.clone().unwrap_or_else(|| {
