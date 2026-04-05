@@ -4,6 +4,12 @@ All notable changes to `fixtures` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.8.0] - 2026-04-05
+
+### Features
+
+- feat: support multiple branches in fixture definitions (#30)
+
 ## [0.7.0] - 2026-04-05
 
 ### Features
