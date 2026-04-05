@@ -144,6 +144,15 @@ echo "running pre-bump"
 '''
 ```
 
+#### Custom default branch
+
+```toml
+[meta]
+name = "my-fixture"
+description = "Repo with master as default branch"
+default_branch = "master"  # defaults to git's init.defaultBranch if omitted
+```
+
 #### Merge commits
 
 ```toml
