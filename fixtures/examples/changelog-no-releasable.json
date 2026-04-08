@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "name": "changelog-no-releasable",
+    "description": "Only chore and ci commits — no releasable changes, no changelog entry"
+  },
+  "config": {
+    "content": "{\n  \"package\": [\n    {\n      \"name\": \"myapp\",\n      \"path\": \".\",\n      \"versioned_files\": [{\"path\": \"version.toml\", \"format\": \"toml\"}],\n      \"changelog\": \"CHANGELOG.md\"\n    }\n  ]\n}\n"
+  },
+  "packages": [
+    {
+      "name": "myapp",
+      "path": ".",
+      "initial_version": "1.0.0",
+      "tag": "v1.0.0"
+    }
+  ],
+  "commits": [
+    {
+      "message": "chore: update dependencies",
+      "files": ["Cargo.lock"]
+    },
+    {
+      "message": "ci: fix workflow",
+      "files": [".github/workflows/ci.yml"]
+    }
+  ],
+  "expect": {
+    "check_contains": ["Nothing to release"],
+    "check_not_contains": ["1.0.1", "1.1.0"]
+  }
+}
