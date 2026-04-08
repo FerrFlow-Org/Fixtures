@@ -5,7 +5,7 @@
     "default_branch": "main"
   },
   "config": {
-    "content": "{ \"orphaned_tag_strategy\": \"ignore\", \"package\": [ { \"name\": \"app\", \"path\": \".\", \"versioned_files\": [{\"path\": \"version.toml\", \"format\": \"toml\"}] } ] }"
+    "content": "{ \"orphaned_tag_strategy\": \"warn\", \"package\": [ { \"name\": \"app\", \"path\": \".\", \"versioned_files\": [{\"path\": \"version.toml\", \"format\": \"toml\"}] } ] }"
   },
   "packages": [
     { "name": "app", "path": ".", "initial_version": "1.0.0", "tag": "v1.0.0" }

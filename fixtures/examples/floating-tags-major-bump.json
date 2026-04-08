@@ -4,7 +4,7 @@
     "description": "Breaking change creates new floating tag v2 while v1 stays on previous release"
   },
   "config": {
-    "content": "{\n  \"workspace\": {\n    \"floating_tags\": true\n  },\n  \"package\": [\n    {\n      \"name\": \"myapp\",\n      \"path\": \".\",\n      \"versioned_files\": [{\"path\": \"version.toml\", \"format\": \"toml\"}]\n    }\n  ]\n}\n"
+    "content": "{\n  \"floating_tags\": [\"major\"],\n  \"package\": [\n    {\n      \"name\": \"myapp\",\n      \"path\": \".\",\n      \"versioned_files\": [{\"path\": \"version.toml\", \"format\": \"toml\"}]\n    }\n  ]\n}\n"
   },
   "packages": [
     {

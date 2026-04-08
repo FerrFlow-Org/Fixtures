@@ -1,10 +1,10 @@
 {
   "meta": {
     "name": "release-commit-message-template",
-    "description": "Custom release commit message template — verifies the commit message matches"
+    "description": "Release commit mode 'commit' creates a release commit on the default branch"
   },
   "config": {
-    "content": "{\n  \"workspace\": {\n    \"releaseCommitMode\": \"commit\",\n    \"releaseCommitMessage\": \"chore(release): bump {name} to {version}\"\n  },\n  \"package\": [\n    {\n      \"name\": \"myapp\",\n      \"path\": \".\",\n      \"versioned_files\": [{\"path\": \"version.toml\", \"format\": \"toml\"}]\n    }\n  ]\n}\n"
+    "content": "{\n  \"release_commit_mode\": \"commit\",\n  \"package\": [\n    {\n      \"name\": \"myapp\",\n      \"path\": \".\",\n      \"versioned_files\": [{\"path\": \"version.toml\", \"format\": \"toml\"}]\n    }\n  ]\n}\n"
   },
   "packages": [
     {
@@ -16,7 +16,7 @@
   ],
   "commits": [
     {
-      "message": "feat: trigger release with custom commit message",
+      "message": "feat: trigger release with commit mode",
       "files": ["src/lib.rs"]
     }
   ],
