@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "name": "changelog-breaking-changes",
+    "description": "Breaking changes with feat! and BREAKING CHANGE footer appear in changelog"
+  },
+  "config": {
+    "content": "{\n  \"package\": [\n    {\n      \"name\": \"mylib\",\n      \"path\": \".\",\n      \"versioned_files\": [{\"path\": \"version.toml\", \"format\": \"toml\"}],\n      \"changelog\": \"CHANGELOG.md\"\n    }\n  ]\n}\n"
+  },
+  "packages": [
+    {
+      "name": "mylib",
+      "path": ".",
+      "initial_version": "1.0.0",
+      "tag": "v1.0.0"
+    }
+  ],
+  "commits": [
+    {
+      "message": "feat!: redesign config file format",
+      "files": ["src/config.rs"]
+    },
+    {
+      "message": "feat: add validation\n\nBREAKING CHANGE: removed legacy parser",
+      "files": ["src/validate.rs"]
+    }
+  ],
+  "expect": {
+    "check_contains": ["mylib", "2.0.0", "major"],
+    "check_not_contains": ["Nothing to release"]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "name": "changelog-scoped-commits",
+    "description": "Scoped commits are grouped correctly in changelog output"
+  },
+  "config": {
+    "content": "{\n  \"package\": [\n    {\n      \"name\": \"myapp\",\n      \"path\": \".\",\n      \"versioned_files\": [{\"path\": \"version.toml\", \"format\": \"toml\"}],\n      \"changelog\": \"CHANGELOG.md\"\n    }\n  ]\n}\n"
+  },
+  "packages": [
+    {
+      "name": "myapp",
+      "path": ".",
+      "initial_version": "1.0.0",
+      "tag": "v1.0.0"
+    }
+  ],
+  "commits": [
+    {
+      "message": "feat(api): add events endpoint",
+      "files": ["src/api.rs"]
+    },
+    {
+      "message": "fix(cli): handle empty input",
+      "files": ["src/cli.rs"]
+    },
+    {
+      "message": "refactor(core): simplify parser",
+      "files": ["src/core.rs"]
+    }
+  ],
+  "expect": {
+    "check_contains": ["myapp", "1.1.0", "minor"],
+    "check_not_contains": ["Nothing to release"]
+  }
+}
