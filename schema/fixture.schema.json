@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/FerrFlow-Org/Fixtures/main/schema/fixture.schema.json",
+  "title": "FerrFlow Fixture Definition",
+  "description": "Declarative definition for generating a git fixture repository.",
+  "type": "object",
+  "required": ["meta"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference for editor support."
+    },
+    "meta": {
+      "type": "object",
+      "description": "Metadata about this fixture.",
+      "required": ["name", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique identifier for this fixture (used as directory name)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the scenario. Copied into .expect.toml."
+        },
+        "default_branch": {
+          "type": "string",
+          "description": "Default branch name for the generated repo. Defaults to git's init.defaultBranch."
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "description": "FerrFlow configuration file to place in the generated repo.",
+      "required": ["content"],
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "Raw content of the config file."
+        },
+        "format": {
+          "type": "string",
+          "enum": ["json", "toml", "json5"],
+          "default": "json",
+          "description": "Config file format. Determines the default filename if 'filename' is not set."
+        },
+        "filename": {
+          "type": "string",
+          "description": "Explicit filename for the config file. Overrides the format-derived default."
+        }
+      }
+    },
+    "packages": {
+      "type": "array",
+      "description": "Packages to set up in the generated repo.",
+      "items": {
+        "type": "object",
+        "required": ["name", "path", "initial_version"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Package name."
+          },
+          "path": {
+            "type": "string",
+            "description": "Relative path to the package directory. Use '.' for root-level packages."
+          },
+          "initial_version": {
+            "type": "string",
+            "description": "Initial semantic version (e.g. '0.1.0', '1.0.0')."
+          },
+          "tag": {
+            "type": "string",
+            "description": "Tag to create on the initial setup commit for this package."
+          }
+        }
+      }
+    },
+    "commits": {
+      "type": "array",
+      "description": "Commits to create on the default branch after initial setup.",
+      "items": {
+        "$ref": "#/$defs/commit"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "description": "Tags to create at specific commit positions.",
+      "items": {
+        "type": "object",
+        "required": ["name", "at_commit"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Tag name (e.g. 'v1.0.0', 'core@v0.2.0')."
+          },
+          "at_commit": {
+            "type": "integer",
+            "description": "Index into the 'commits' array. Use -1 for the initial setup commit.",
+            "minimum": -1
+          }
+        }
+      }
+    },
+    "branches": {
+      "type": "array",
+      "description": "Branches to create from specific points.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Branch name."
+          },
+          "from": {
+            "type": "string",
+            "description": "Source branch to fork from. Defaults to the default branch."
+          },
+          "at_commit": {
+            "type": "integer",
+            "description": "Commit index to branch from (-1 = initial setup). If omitted, branches from the tip of 'from'.",
+            "minimum": -1
+          },
+          "commits": {
+            "type": "array",
+            "description": "Commits to add on this branch.",
+            "items": {
+              "$ref": "#/$defs/commit"
+            }
+          },
+          "merge": {
+            "type": "string",
+            "description": "If set, creates a merge commit back into the named branch after all commits are added."
+          }
+        }
+      }
+    },
+    "hooks": {
+      "type": "array",
+      "description": "Hook scripts to place in the generated repo.",
+      "items": {
+        "type": "object",
+        "required": ["path", "content"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative path for the hook file (e.g. 'hooks/pre-bump.sh')."
+          },
+          "content": {
+            "type": "string",
+            "description": "Content of the hook script."
+          }
+        }
+      }
+    },
+    "generate": {
+      "type": "object",
+      "description": "Bulk generation mode. Creates synthetic commits without listing them individually.",
+      "additionalProperties": false,
+      "properties": {
+        "packages": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Number of packages to generate (1 = single-package repo)."
+        },
+        "commits": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 100,
+          "description": "Number of synthetic commits to generate."
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 42,
+          "description": "RNG seed for deterministic output."
+        }
+      }
+    },
+    "expect": {
+      "type": "object",
+      "description": "Expected output assertions. Written to .expect.toml for consumer test runners.",
+      "additionalProperties": false,
+      "properties": {
+        "check_contains": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Strings that must appear in the consumer's output."
+        },
+        "check_not_contains": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Strings that must not appear in the consumer's output."
+        },
+        "output_order": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Strings that must appear in order in the consumer's output."
+        },
+        "packages_released": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Expected number of packages released."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "commit": {
+      "type": "object",
+      "required": ["message"],
+      "additionalProperties": false,
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "Commit message (should follow Conventional Commits format)."
+        },
+        "files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Files to create/modify in this commit."
+        },
+        "merge": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, creates a merge commit instead of a regular commit."
+        }
+      }
+    }
+  }
+}

@@ -44,10 +44,11 @@ cd generator && cargo build --release
 
 ## Fixture definition format
 
-Each `.json` file describes a git repo scenario:
+Each `.json` file describes a git repo scenario. Add `$schema` for editor autocomplete and validation:
 
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/FerrFlow-Org/Fixtures/main/schema/fixture.schema.json",
   "meta": {
     "name": "monorepo-two-packages",
     "description": "Two packages both touched in the same commit get independent bumps"
@@ -257,6 +258,8 @@ Create branches from specific points and optionally merge them back:
 │       ├── types.rs            # Definition structs and deserialization
 │       ├── tree.rs            # Incremental tree builder for bulk generation
 │       └── rng.rs             # Deterministic RNG for synthetic commits
+├── schema/
+│   └── fixture.schema.json    # JSON Schema for fixture definitions
 ├── fixtures/
 │   └── examples/              # Example definitions for reference
 └── .github/
