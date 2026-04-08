@@ -575,7 +575,7 @@ mod tests {
         let def_path = write_def(
             def_dir.path(),
             "test",
-            r#"{"meta":{"name":"test","description":"d"},"commits":[{"message":"feat: base","files":["a.txt"]}],"branches":[{"name":"develop","at_commit":0,"commits":[{"message":"feat: dev work","files":["b.txt"]}]}]}"#,
+            r#"{"meta":{"name":"test","description":"d","default_branch":"main"},"commits":[{"message":"feat: base","files":["a.txt"]}],"branches":[{"name":"develop","at_commit":0,"commits":[{"message":"feat: dev work","files":["b.txt"]}]}]}"#,
         );
 
         let out = tmp.path().join("test");
@@ -593,7 +593,7 @@ mod tests {
         let def_path = write_def(
             def_dir.path(),
             "test",
-            r#"{"meta":{"name":"test","description":"d"},"commits":[{"message":"feat: base","files":["a.txt"]}],"branches":[{"name":"feature","at_commit":0,"merge":"main","commits":[{"message":"feat: on branch","files":["b.txt"]}]}]}"#,
+            r#"{"meta":{"name":"test","description":"d","default_branch":"main"},"commits":[{"message":"feat: base","files":["a.txt"]}],"branches":[{"name":"feature","at_commit":0,"merge":"main","commits":[{"message":"feat: on branch","files":["b.txt"]}]}]}"#,
         );
 
         let out = tmp.path().join("test");
