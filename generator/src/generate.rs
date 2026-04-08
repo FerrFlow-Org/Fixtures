@@ -405,3 +405,295 @@ fn write_expect(output_dir: &Path, def: &FixtureDef) -> Result<()> {
     fs::write(&expect_path, expect_content)?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use git2::Repository;
+    use std::io::Write;
+    use tempfile::TempDir;
+
+    fn write_def(dir: &Path, name: &str, content: &str) -> std::path::PathBuf {
+        let path = dir.join(format!("{name}.json"));
+        let mut f = fs::File::create(&path).unwrap();
+        f.write_all(content.as_bytes()).unwrap();
+        path
+    }
+
+    fn count_commits(repo: &Repository) -> usize {
+        let mut revwalk = repo.revwalk().unwrap();
+        revwalk.push_head().unwrap();
+        revwalk.count()
+    }
+
+    fn get_tags(repo: &Repository) -> Vec<String> {
+        let mut tags = Vec::new();
+        repo.tag_foreach(|_oid, name| {
+            let name = std::str::from_utf8(name).unwrap();
+            let short = name.strip_prefix("refs/tags/").unwrap_or(name);
+            tags.push(short.to_string());
+            true
+        })
+        .unwrap();
+        tags.sort();
+        tags
+    }
+
+    #[test]
+    fn generates_valid_git_repo() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"basic"},"packages":[{"name":"app","path":".","initial_version":"1.0.0","tag":"v1.0.0"}],"commits":[{"message":"feat: add feature","files":["src/main.rs"]}]}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        let repo = Repository::open(&out).unwrap();
+        assert!(repo.head().is_ok());
+    }
+
+    #[test]
+    fn correct_commit_count() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"d"},"commits":[{"message":"feat: one","files":["a.txt"]},{"message":"fix: two","files":["b.txt"]},{"message":"chore: three","files":["c.txt"]}]}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        let repo = Repository::open(&out).unwrap();
+        // 3 explicit commits + 1 initial setup = 4
+        assert_eq!(count_commits(&repo), 4);
+    }
+
+    #[test]
+    fn tags_are_created() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"d"},"packages":[{"name":"app","path":".","initial_version":"1.0.0","tag":"v1.0.0"}],"commits":[{"message":"feat: bump","files":["a.txt"]}],"tags":[{"name":"v1.1.0","at_commit":0}]}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        let repo = Repository::open(&out).unwrap();
+        let tags = get_tags(&repo);
+        assert!(tags.contains(&"v1.0.0".to_string()));
+        assert!(tags.contains(&"v1.1.0".to_string()));
+    }
+
+    #[test]
+    fn config_file_is_written() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"d"},"config":{"content":"{\"package\":[]}","format":"json"}}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        let config_path = out.join("ferrflow.json");
+        assert!(config_path.exists());
+        let content = fs::read_to_string(&config_path).unwrap();
+        assert!(content.contains("package"));
+    }
+
+    #[test]
+    fn toml_config_format() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"d"},"config":{"content":"[package]","format":"toml"}}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        assert!(out.join(".ferrflow.toml").exists());
+    }
+
+    #[test]
+    fn expect_toml_is_generated() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"my description"},"expect":{"check_contains":["hello"],"packages_released":1}}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        let expect_path = out.join(".expect.toml");
+        assert!(expect_path.exists());
+        let content = fs::read_to_string(&expect_path).unwrap();
+        assert!(content.contains("my description"));
+        assert!(content.contains("hello"));
+        assert!(content.contains("packages_released = 1"));
+    }
+
+    #[test]
+    fn hook_files_are_created() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"d"},"hooks":[{"path":"hooks/pre-bump.sh","content":"echo hi"}]}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        let hook_path = out.join("hooks/pre-bump.sh");
+        assert!(hook_path.exists());
+        let content = fs::read_to_string(&hook_path).unwrap();
+        assert_eq!(content, "echo hi");
+    }
+
+    #[test]
+    fn branches_are_created() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"d"},"commits":[{"message":"feat: base","files":["a.txt"]}],"branches":[{"name":"develop","at_commit":0,"commits":[{"message":"feat: dev work","files":["b.txt"]}]}]}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        let repo = Repository::open(&out).unwrap();
+        let branch = repo.find_branch("develop", git2::BranchType::Local);
+        assert!(branch.is_ok(), "develop branch should exist");
+    }
+
+    #[test]
+    fn branch_merge_creates_merge_commit() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"d"},"commits":[{"message":"feat: base","files":["a.txt"]}],"branches":[{"name":"feature","at_commit":0,"merge":"main","commits":[{"message":"feat: on branch","files":["b.txt"]}]}]}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        let repo = Repository::open(&out).unwrap();
+        let head = repo.head().unwrap().peel_to_commit().unwrap();
+        // Merge commit has 2 parents
+        assert_eq!(head.parent_count(), 2);
+    }
+
+    #[test]
+    fn bulk_generation_single_package() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"d"},"config":{"content":"{}"},"generate":{"packages":1,"commits":10,"seed":42}}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        let repo = Repository::open(&out).unwrap();
+        // 10 commits + 1 initial = 11
+        assert_eq!(count_commits(&repo), 11);
+
+        let tags = get_tags(&repo);
+        assert!(tags.contains(&"v0.1.0".to_string()));
+    }
+
+    #[test]
+    fn bulk_generation_monorepo() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"d"},"config":{"content":"{}"},"generate":{"packages":3,"commits":5,"seed":1}}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        let repo = Repository::open(&out).unwrap();
+        // 5 commits + 1 initial = 6
+        assert_eq!(count_commits(&repo), 6);
+
+        let tags = get_tags(&repo);
+        assert!(tags.contains(&"pkg-001@v0.1.0".to_string()));
+        assert!(tags.contains(&"pkg-002@v0.1.0".to_string()));
+        assert!(tags.contains(&"pkg-003@v0.1.0".to_string()));
+    }
+
+    #[test]
+    fn custom_default_branch() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"d","default_branch":"master"}}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        let repo = Repository::open(&out).unwrap();
+        let head = repo.head().unwrap();
+        assert_eq!(head.shorthand().unwrap(), "master",);
+    }
+
+    #[test]
+    fn invalid_json_returns_error() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(def_dir.path(), "bad", "not json");
+
+        let out = tmp.path().join("bad");
+        let result = generate_fixture(&def_path, &out, false);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn merge_commit_in_main_branch() {
+        let tmp = TempDir::new().unwrap();
+        let def_dir = TempDir::new().unwrap();
+        let def_path = write_def(
+            def_dir.path(),
+            "test",
+            r#"{"meta":{"name":"test","description":"d"},"commits":[{"message":"feat: merged feature","files":["src/feature.rs"],"merge":true}]}"#,
+        );
+
+        let out = tmp.path().join("test");
+        generate_fixture(&def_path, &out, false).unwrap();
+
+        let repo = Repository::open(&out).unwrap();
+        let head = repo.head().unwrap().peel_to_commit().unwrap();
+        // The merge commit at HEAD should have 2 parents
+        assert_eq!(head.parent_count(), 2);
+    }
+}
