@@ -244,7 +244,7 @@ fn generate_bulk(def: &FixtureDef, output_dir: &Path, verbose: bool) -> Result<(
 
     let repo = init_repo(output_dir, def.meta.default_branch.as_deref())?;
     let mut b = BulkRepoBuilder::new();
-    let mut rng = Rng::new(gen.seed);
+    let mut rng = Rng::new(gen.seed)?;
     let now = chrono::Utc::now().timestamp();
 
     let is_mono = pkg_count > 1;
