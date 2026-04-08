@@ -1,10 +1,15 @@
+use anyhow::{bail, Result};
 use git2::Time;
 
+#[derive(Debug)]
 pub struct Rng(u64);
 
 impl Rng {
-    pub fn new(seed: u64) -> Self {
-        Self(seed)
+    pub fn new(seed: u64) -> Result<Self> {
+        if seed == 0 {
+            bail!("seed must be non-zero (xorshift produces only zeros with seed=0)");
+        }
+        Ok(Self(seed))
     }
 
     fn next_u64(&mut self) -> u64 {
@@ -73,8 +78,8 @@ mod tests {
 
     #[test]
     fn deterministic_sequence() {
-        let mut a = Rng::new(123);
-        let mut b = Rng::new(123);
+        let mut a = Rng::new(123).unwrap();
+        let mut b = Rng::new(123).unwrap();
         let vals_a: Vec<usize> = (0..20).map(|_| a.usize(1000)).collect();
         let vals_b: Vec<usize> = (0..20).map(|_| b.usize(1000)).collect();
         assert_eq!(vals_a, vals_b);
@@ -82,8 +87,8 @@ mod tests {
 
     #[test]
     fn different_seeds_differ() {
-        let mut a = Rng::new(1);
-        let mut b = Rng::new(2);
+        let mut a = Rng::new(1).unwrap();
+        let mut b = Rng::new(2).unwrap();
         let vals_a: Vec<usize> = (0..10).map(|_| a.usize(1000)).collect();
         let vals_b: Vec<usize> = (0..10).map(|_| b.usize(1000)).collect();
         assert_ne!(vals_a, vals_b);
@@ -91,7 +96,7 @@ mod tests {
 
     #[test]
     fn usize_within_range() {
-        let mut rng = Rng::new(42);
+        let mut rng = Rng::new(42).unwrap();
         for _ in 0..200 {
             let v = rng.usize(10);
             assert!(v < 10, "got {v}, expected < 10");
@@ -101,7 +106,7 @@ mod tests {
     #[test]
     fn pick_returns_item_from_slice() {
         let items = &["a", "b", "c"];
-        let mut rng = Rng::new(99);
+        let mut rng = Rng::new(99).unwrap();
         for _ in 0..50 {
             let picked = rng.pick(items);
             assert!(items.contains(&picked));
@@ -110,7 +115,7 @@ mod tests {
 
     #[test]
     fn rand_message_format() {
-        let mut rng = Rng::new(42);
+        let mut rng = Rng::new(42).unwrap();
         let msg = rand_message(&mut rng, "core");
         // Must match pattern: type(scope)[!]: word word
         assert!(msg.contains("(core)"), "missing scope in: {msg}");
@@ -135,11 +140,20 @@ mod tests {
 
     #[test]
     fn rand_time_is_in_the_past() {
-        let mut rng = Rng::new(42);
+        let mut rng = Rng::new(42).unwrap();
         let now = 1_700_000_000i64;
         for _ in 0..50 {
             let t = rand_time(&mut rng, now);
             assert!(t.seconds() <= now);
         }
+    }
+
+    #[test]
+    fn seed_zero_rejected() {
+        let err = Rng::new(0).unwrap_err();
+        assert!(
+            err.to_string().contains("non-zero"),
+            "unexpected error: {err}"
+        );
     }
 }

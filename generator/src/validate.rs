@@ -205,6 +205,16 @@ fn validate_single(path: &Path) -> std::result::Result<Vec<String>, Vec<String>>
         );
     }
 
+    // Reject seed=0 in bulk generation (xorshift produces only zeros)
+    if let Some(gen) = &def.generate {
+        if gen.seed == 0 {
+            errors.push(
+                "generate.seed must be non-zero (xorshift degenerates to all zeros with seed=0)"
+                    .to_string(),
+            );
+        }
+    }
+
     if errors.is_empty() {
         Ok(warnings)
     } else {
@@ -348,6 +358,17 @@ mod tests {
             tmp.path(),
             "dup",
             r#"{"meta":{"name":"t","description":"d"},"packages":[{"name":"a","path":".","initial_version":"1.0.0"},{"name":"b","path":".","initial_version":"1.0.0"}]}"#,
+        );
+        assert!(!validate_definitions(tmp.path()).unwrap());
+    }
+
+    #[test]
+    fn seed_zero_rejected() {
+        let tmp = TempDir::new().unwrap();
+        write_def(
+            tmp.path(),
+            "bad-seed",
+            r#"{"meta":{"name":"t","description":"d"},"generate":{"packages":2,"commits":10,"seed":0}}"#,
         );
         assert!(!validate_definitions(tmp.path()).unwrap());
     }
