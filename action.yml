@@ -1,5 +1,5 @@
 name: 'FerrFlow Fixtures'
-description: 'Generate git fixture repos from declarative TOML definitions'
+description: 'Generate git fixture repos from declarative JSON definitions'
 author: 'FerrFlow-Org'
 branding:
   icon: 'box'
@@ -7,7 +7,7 @@ branding:
 
 inputs:
   definitions:
-    description: 'Path to directory containing TOML fixture definitions (provided by the consumer repo)'
+    description: 'Path to directory containing JSON fixture definitions (provided by the consumer repo)'
     required: true
   generated-dir:
     description: 'Output directory for generated fixture repos'
