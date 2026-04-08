@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "name": "tag-template-custom-prefix",
+    "description": "Non-standard tag template with custom prefix pattern"
+  },
+  "config": {
+    "content": "{\n  \"workspace\": {\n    \"tag_template\": \"release/{name}/{version}\"\n  },\n  \"package\": [\n    {\n      \"name\": \"api\",\n      \"path\": \"api\",\n      \"versioned_files\": [{\"path\": \"api/version.toml\", \"format\": \"toml\"}]\n    }\n  ]\n}\n"
+  },
+  "packages": [
+    {
+      "name": "api",
+      "path": "api",
+      "initial_version": "0.5.0",
+      "tag": "release/api/0.5.0"
+    }
+  ],
+  "commits": [
+    {
+      "message": "fix(api): handle timeout",
+      "files": ["api/src/handler.rs"]
+    }
+  ],
+  "expect": {
+    "check_contains": ["api", "0.5.1"],
+    "check_not_contains": ["Nothing to release"]
+  }
+}

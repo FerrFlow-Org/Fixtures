@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "name": "tag-template-mismatch",
+    "description": "Existing tags use a different format than the configured template"
+  },
+  "config": {
+    "content": "{\n  \"workspace\": {\n    \"tag_template\": \"{name}@v{version}\"\n  },\n  \"package\": [\n    {\n      \"name\": \"mylib\",\n      \"path\": \".\",\n      \"versioned_files\": [{\"path\": \"version.toml\", \"format\": \"toml\"}]\n    }\n  ]\n}\n"
+  },
+  "packages": [
+    {
+      "name": "mylib",
+      "path": ".",
+      "initial_version": "1.0.0"
+    }
+  ],
+  "tags": [
+    {
+      "name": "v1.0.0",
+      "at_commit": -1
+    }
+  ],
+  "commits": [
+    {
+      "message": "feat: add feature",
+      "files": ["src/lib.rs"]
+    }
+  ],
+  "expect": {
+    "check_contains": ["mylib"],
+    "check_not_contains": []
+  }
+}
