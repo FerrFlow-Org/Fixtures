@@ -32,6 +32,75 @@ pub fn parse_args(args: &[String]) -> Result<(PathBuf, PathBuf)> {
     Ok((defs_dir, gen_dir))
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn args(slice: &[&str]) -> Vec<String> {
+        slice.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn defaults_when_no_args() {
+        let (defs, gen) = parse_args(&args(&["bin"])).unwrap();
+        assert_eq!(defs, PathBuf::from("fixtures/definitions"));
+        assert_eq!(gen, PathBuf::from("fixtures/generated"));
+    }
+
+    #[test]
+    fn long_flags() {
+        let (defs, gen) =
+            parse_args(&args(&["bin", "--definitions", "/tmp/defs", "--output", "/tmp/out"]))
+                .unwrap();
+        assert_eq!(defs, PathBuf::from("/tmp/defs"));
+        assert_eq!(gen, PathBuf::from("/tmp/out"));
+    }
+
+    #[test]
+    fn short_flags() {
+        let (defs, gen) =
+            parse_args(&args(&["bin", "-d", "my/defs", "-o", "my/out"])).unwrap();
+        assert_eq!(defs, PathBuf::from("my/defs"));
+        assert_eq!(gen, PathBuf::from("my/out"));
+    }
+
+    #[test]
+    fn only_definitions_flag() {
+        let (defs, gen) = parse_args(&args(&["bin", "-d", "custom"])).unwrap();
+        assert_eq!(defs, PathBuf::from("custom"));
+        assert_eq!(gen, PathBuf::from("fixtures/generated"));
+    }
+
+    #[test]
+    fn only_output_flag() {
+        let (defs, gen) = parse_args(&args(&["bin", "-o", "custom"])).unwrap();
+        assert_eq!(defs, PathBuf::from("fixtures/definitions"));
+        assert_eq!(gen, PathBuf::from("custom"));
+    }
+
+    #[test]
+    fn missing_definitions_value() {
+        let result = parse_args(&args(&["bin", "--definitions"]));
+        assert!(result.is_err());
+        let msg = result.unwrap_err().to_string();
+        assert!(msg.contains("missing value"), "unexpected error: {msg}");
+    }
+
+    #[test]
+    fn missing_output_value() {
+        let result = parse_args(&args(&["bin", "--output"]));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn unknown_argument() {
+        let result = parse_args(&args(&["bin", "--foo"]));
+        assert!(result.is_err());
+        let msg = result.unwrap_err().to_string();
+        assert!(msg.contains("unknown argument"), "unexpected error: {msg}");
+    }
+}
+
 fn print_help() {
     println!(
         "generate-fixtures {}
