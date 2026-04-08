@@ -7,6 +7,9 @@ use crate::rng::{rand_message, rand_time, Rng};
 use crate::tree::BulkRepoBuilder;
 use crate::types::{resolve_config_filename, FixtureDef, SerializableExpect};
 
+pub const AUTHOR_NAME: &str = "Test";
+pub const AUTHOR_EMAIL: &str = "test@test.com";
+
 pub fn generate_fixture(def_path: &Path, output_dir: &Path, verbose: bool) -> Result<()> {
     let content =
         fs::read_to_string(def_path).with_context(|| format!("reading {}", def_path.display()))?;
@@ -43,8 +46,8 @@ fn generate_explicit(def: &FixtureDef, output_dir: &Path, verbose: bool) -> Resu
     let repo = init_repo(output_dir, def.meta.default_branch.as_deref())?;
     {
         let mut config = repo.config()?;
-        config.set_str("user.name", "Test")?;
-        config.set_str("user.email", "test@test.com")?;
+        config.set_str("user.name", AUTHOR_NAME)?;
+        config.set_str("user.email", AUTHOR_EMAIL)?;
     }
 
     if let Some(config) = &def.config {
@@ -208,7 +211,7 @@ fn generate_explicit(def: &FixtureDef, output_dir: &Path, verbose: bool) -> Resu
             index.write()?;
             let tree_id = index.write_tree()?;
             let tree = repo.find_tree(tree_id)?;
-            let sig = Signature::now("Test", "test@test.com")?;
+            let sig = Signature::now(AUTHOR_NAME, AUTHOR_EMAIL)?;
 
             repo.commit(
                 Some("HEAD"),
@@ -348,7 +351,7 @@ fn add_all_and_commit(repo: &Repository, message: &str) -> Result<git2::Oid> {
     let tree_id = index.write_tree()?;
     let tree = repo.find_tree(tree_id)?;
 
-    let sig = Signature::now("Test", "test@test.com")?;
+    let sig = Signature::now(AUTHOR_NAME, AUTHOR_EMAIL)?;
 
     let parents: Vec<git2::Commit> = match repo.head() {
         Ok(head) => vec![head.peel_to_commit()?],
@@ -361,7 +364,7 @@ fn add_all_and_commit(repo: &Repository, message: &str) -> Result<git2::Oid> {
 }
 
 fn create_merge_commit(repo: &Repository, _dir: &Path, message: &str) -> Result<git2::Oid> {
-    let sig = Signature::now("Test", "test@test.com")?;
+    let sig = Signature::now(AUTHOR_NAME, AUTHOR_EMAIL)?;
     let main_commit = repo.head()?.peel_to_commit()?;
 
     let mut index = repo.index()?;

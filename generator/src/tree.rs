@@ -2,6 +2,8 @@ use anyhow::{bail, Result};
 use git2::{FileMode, Oid, Repository, Signature, Time};
 use std::collections::HashMap;
 
+use crate::generate::{AUTHOR_EMAIL, AUTHOR_NAME};
+
 pub enum TreeEntry {
     Blob(Oid),
     Tree(TreeNode),
@@ -104,7 +106,7 @@ impl BulkRepoBuilder {
     ) -> Result<Oid> {
         let tree_id = self.root.write(repo)?;
         let tree = repo.find_tree(tree_id)?;
-        let s = Signature::new("Test", "test@test.com", time)?;
+        let s = Signature::new(AUTHOR_NAME, AUTHOR_EMAIL, time)?;
 
         let oid = match parent {
             Some(pid) => {
