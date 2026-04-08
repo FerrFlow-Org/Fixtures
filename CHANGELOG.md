@@ -4,6 +4,16 @@ All notable changes to `fixtures` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.9.0] - 2026-04-08
+
+### Features
+
+- feat: add hook execution fixture definitions (#45)
+- feat: add changelog generation fixture definitions (#44)
+- feat: add floating tags fixture definitions (#43)
+- feat: add tag template fixture definitions (#42)
+- feat: add pre-release channel fixture definitions (#41)
+
 ## [0.8.1] - 2026-04-08
 
 ### Bug Fixes
