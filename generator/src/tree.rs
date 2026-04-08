@@ -113,3 +113,142 @@ impl BulkRepoBuilder {
         Ok(oid)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    fn init_repo() -> (TempDir, Repository) {
+        let tmp = TempDir::new().unwrap();
+        let repo = Repository::init(tmp.path()).unwrap();
+        (tmp, repo)
+    }
+
+    #[test]
+    fn insert_blob_flat() {
+        let (_tmp, repo) = init_repo();
+        let blob = repo.blob(b"hello").unwrap();
+
+        let mut root = TreeNode::new();
+        root.insert_blob("file.txt", blob);
+
+        let tree_oid = root.write(&repo).unwrap();
+        let tree = repo.find_tree(tree_oid).unwrap();
+        assert!(tree.get_name("file.txt").is_some());
+    }
+
+    #[test]
+    fn insert_blob_nested() {
+        let (_tmp, repo) = init_repo();
+        let blob = repo.blob(b"data").unwrap();
+
+        let mut root = TreeNode::new();
+        root.insert_blob("a/b/c.txt", blob);
+
+        let tree_oid = root.write(&repo).unwrap();
+        let tree = repo.find_tree(tree_oid).unwrap();
+
+        let a_entry = tree.get_name("a").unwrap();
+        let a_tree = repo.find_tree(a_entry.id()).unwrap();
+        let b_entry = a_tree.get_name("b").unwrap();
+        let b_tree = repo.find_tree(b_entry.id()).unwrap();
+        assert!(b_tree.get_name("c.txt").is_some());
+    }
+
+    #[test]
+    fn insert_blob_overwrites_same_path() {
+        let (_tmp, repo) = init_repo();
+        let blob1 = repo.blob(b"v1").unwrap();
+        let blob2 = repo.blob(b"v2").unwrap();
+
+        let mut root = TreeNode::new();
+        root.insert_blob("f.txt", blob1);
+        root.insert_blob("f.txt", blob2);
+
+        let tree_oid = root.write(&repo).unwrap();
+        let tree = repo.find_tree(tree_oid).unwrap();
+        let entry = tree.get_name("f.txt").unwrap();
+        let obj = repo.find_blob(entry.id()).unwrap();
+        assert_eq!(obj.content(), b"v2");
+    }
+
+    #[test]
+    fn cached_oid_invalidated_on_insert() {
+        let (_tmp, repo) = init_repo();
+        let blob1 = repo.blob(b"first").unwrap();
+        let blob2 = repo.blob(b"second").unwrap();
+
+        let mut root = TreeNode::new();
+        root.insert_blob("a.txt", blob1);
+        let oid1 = root.write(&repo).unwrap();
+
+        root.insert_blob("b.txt", blob2);
+        let oid2 = root.write(&repo).unwrap();
+
+        assert_ne!(oid1, oid2);
+    }
+
+    #[test]
+    #[should_panic(expected = "path conflict")]
+    fn insert_blob_conflicts_with_existing_blob() {
+        let (_tmp, repo) = init_repo();
+        let blob = repo.blob(b"x").unwrap();
+
+        let mut root = TreeNode::new();
+        root.insert_blob("f", blob);
+        // Try to insert a nested path where "f" is already a blob
+        root.insert_blob("f/g.txt", blob);
+    }
+
+    #[test]
+    fn builder_set_file_and_commit() {
+        let (_tmp, repo) = init_repo();
+        let mut builder = BulkRepoBuilder::new();
+        let time = Time::new(1_700_000_000, 0);
+
+        builder.set_file(&repo, "README.md", b"# hello").unwrap();
+        let oid = builder.commit(&repo, None, "initial commit", &time).unwrap();
+
+        let commit = repo.find_commit(oid).unwrap();
+        assert_eq!(commit.message(), Some("initial commit"));
+
+        let tree = commit.tree().unwrap();
+        assert!(tree.get_name("README.md").is_some());
+    }
+
+    #[test]
+    fn builder_append_dummy_accumulates() {
+        let (_tmp, repo) = init_repo();
+        let mut builder = BulkRepoBuilder::new();
+        let time = Time::new(1_700_000_000, 0);
+
+        builder.append_dummy(&repo, "src/main.rs").unwrap();
+        let c1 = builder.commit(&repo, None, "first", &time).unwrap();
+
+        builder.append_dummy(&repo, "src/main.rs").unwrap();
+        let c2 = builder.commit(&repo, Some(c1), "second", &time).unwrap();
+
+        // The two commits should have different trees (file content changed)
+        let t1 = repo.find_commit(c1).unwrap().tree_id();
+        let t2 = repo.find_commit(c2).unwrap().tree_id();
+        assert_ne!(t1, t2);
+    }
+
+    #[test]
+    fn builder_commit_chain() {
+        let (_tmp, repo) = init_repo();
+        let mut builder = BulkRepoBuilder::new();
+        let time = Time::new(1_700_000_000, 0);
+
+        builder.set_file(&repo, "f.txt", b"a").unwrap();
+        let c1 = builder.commit(&repo, None, "c1", &time).unwrap();
+
+        builder.set_file(&repo, "f.txt", b"b").unwrap();
+        let c2 = builder.commit(&repo, Some(c1), "c2", &time).unwrap();
+
+        let commit2 = repo.find_commit(c2).unwrap();
+        assert_eq!(commit2.parent_count(), 1);
+        assert_eq!(commit2.parent_id(0).unwrap(), c1);
+    }
+}

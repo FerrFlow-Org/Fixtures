@@ -137,3 +137,53 @@ pub fn resolve_config_filename(config: &ConfigDef) -> String {
             _ => "ferrflow.json".to_string(),
         })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn config(format: &str, filename: Option<&str>) -> ConfigDef {
+        ConfigDef {
+            content: String::new(),
+            format: format.to_string(),
+            filename: filename.map(|s| s.to_string()),
+        }
+    }
+
+    #[test]
+    fn resolve_default_json() {
+        assert_eq!(resolve_config_filename(&config("json", None)), "ferrflow.json");
+    }
+
+    #[test]
+    fn resolve_default_toml() {
+        assert_eq!(resolve_config_filename(&config("toml", None)), ".ferrflow.toml");
+    }
+
+    #[test]
+    fn resolve_default_json5() {
+        assert_eq!(resolve_config_filename(&config("json5", None)), "ferrflow.json5");
+    }
+
+    #[test]
+    fn resolve_unknown_format_falls_back_to_json() {
+        assert_eq!(resolve_config_filename(&config("yaml", None)), "ferrflow.json");
+    }
+
+    #[test]
+    fn resolve_custom_filename_overrides_format() {
+        assert_eq!(
+            resolve_config_filename(&config("toml", Some("my-config.toml"))),
+            "my-config.toml"
+        );
+    }
+
+    #[test]
+    fn resolve_custom_filename_ignores_format_mismatch() {
+        // Even if format is json, a custom filename wins
+        assert_eq!(
+            resolve_config_filename(&config("json", Some(".ferrflow.toml"))),
+            ".ferrflow.toml"
+        );
+    }
+}
