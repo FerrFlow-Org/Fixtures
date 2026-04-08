@@ -93,6 +93,24 @@ fn validate_single(path: &Path) -> std::result::Result<Vec<String>, Vec<String>>
         }
     }
 
+    // Check for duplicate package names
+    let mut pkg_names: Vec<&str> = def.packages.iter().map(|p| p.name.as_str()).collect();
+    pkg_names.sort();
+    for window in pkg_names.windows(2) {
+        if window[0] == window[1] {
+            errors.push(format!("duplicate package name: '{}'", window[0]));
+        }
+    }
+
+    // Check for duplicate package paths
+    let mut pkg_paths: Vec<&str> = def.packages.iter().map(|p| p.path.as_str()).collect();
+    pkg_paths.sort();
+    for window in pkg_paths.windows(2) {
+        if window[0] == window[1] {
+            errors.push(format!("duplicate package path: '{}'", window[0]));
+        }
+    }
+
     // Validate branch references
     let default_branch = def.meta.default_branch.as_deref().unwrap_or("main");
     let branch_names: Vec<&str> = def.branches.iter().map(|b| b.name.as_str()).collect();
@@ -308,6 +326,28 @@ mod tests {
             tmp.path(),
             "empty",
             r#"{"meta":{"name":"","description":"d"}}"#,
+        );
+        assert!(!validate_definitions(tmp.path()).unwrap());
+    }
+
+    #[test]
+    fn duplicate_package_names() {
+        let tmp = TempDir::new().unwrap();
+        write_def(
+            tmp.path(),
+            "dup",
+            r#"{"meta":{"name":"t","description":"d"},"packages":[{"name":"app","path":"a","initial_version":"1.0.0"},{"name":"app","path":"b","initial_version":"1.0.0"}]}"#,
+        );
+        assert!(!validate_definitions(tmp.path()).unwrap());
+    }
+
+    #[test]
+    fn duplicate_package_paths() {
+        let tmp = TempDir::new().unwrap();
+        write_def(
+            tmp.path(),
+            "dup",
+            r#"{"meta":{"name":"t","description":"d"},"packages":[{"name":"a","path":".","initial_version":"1.0.0"},{"name":"b","path":".","initial_version":"1.0.0"}]}"#,
         );
         assert!(!validate_definitions(tmp.path()).unwrap());
     }
