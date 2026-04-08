@@ -4,6 +4,8 @@ All notable changes to `fixtures` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.16.1] - 2026-04-08
+
 ## [0.16.0] - 2026-04-08
 
 ### Features
