@@ -1,0 +1,68 @@
+name: Validate Fixtures
+
+on:
+  workflow_call:
+    inputs:
+      definitions:
+        description: 'Path to JSON fixture definitions in the caller repo'
+        required: true
+        type: string
+      ferrflow-ref:
+        description: 'Git ref (branch/tag/SHA) to build FerrFlow from'
+        required: false
+        type: string
+        default: 'main'
+      test-script:
+        description: 'Path to the test runner script in the caller repo'
+        required: false
+        type: string
+        default: 'tests/fixtures/run-tests.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Generate & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller repo
+        uses: actions/checkout@v4
+
+      - name: Generate fixtures
+        id: fixtures
+        uses: FerrFlow-Org/Fixtures@v0
+        with:
+          definitions: ${{ inputs.definitions }}
+
+      - name: Checkout FerrFlow
+        uses: actions/checkout@v4
+        with:
+          repository: FerrFlow-Org/FerrFlow
+          ref: ${{ inputs.ferrflow-ref }}
+          path: __ferrflow__
+
+      - uses: dtolnay/rust-toolchain@nightly
+
+      - uses: actions/cache@v4
+        with:
+          path: __ferrflow__/target
+          key: ferrflow-${{ runner.os }}-${{ inputs.ferrflow-ref }}-${{ hashFiles('__ferrflow__/Cargo.lock') }}
+
+      - name: Build FerrFlow
+        working-directory: __ferrflow__
+        run: cargo build --release
+
+      - name: Run fixture tests
+        run: |
+          chmod +x "${{ inputs.test-script }}"
+          FERRFLOW_BIN="$PWD/__ferrflow__/target/release/ferrflow" \
+            bash "${{ inputs.test-script }}" "${{ steps.fixtures.outputs.generated-path }}"
+
+      - name: Upload test output on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fixture-test-output
+          path: ${{ steps.fixtures.outputs.generated-path }}
+          retention-days: 7
