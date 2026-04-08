@@ -4,6 +4,12 @@ All notable changes to `fixtures` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.15.3] - 2026-04-08
+
+### Bug Fixes
+
+- fix: validate duplicate package names and paths (#78)
+
 ## [0.15.2] - 2026-04-08
 
 ### Bug Fixes
