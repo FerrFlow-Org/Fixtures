@@ -4,6 +4,12 @@ All notable changes to `fixtures` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.14.0] - 2026-04-08
+
+### Features
+
+- feat: add JSON schema for fixture definitions (#66)
+
 ## [0.13.0] - 2026-04-08
 
 ### Features
