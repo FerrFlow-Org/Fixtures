@@ -4,7 +4,7 @@
     "description": "Floating tag v1 moves to latest minor release within major version"
   },
   "config": {
-    "content": "{\n  \"workspace\": {\n    \"floating_tags\": true\n  },\n  \"package\": [\n    {\n      \"name\": \"myapp\",\n      \"path\": \".\",\n      \"versioned_files\": [{\"path\": \"version.toml\", \"format\": \"toml\"}]\n    }\n  ]\n}\n"
+    "content": "{\n  \"floating_tags\": [\"major\"],\n  \"package\": [\n    {\n      \"name\": \"myapp\",\n      \"path\": \".\",\n      \"versioned_files\": [{\"path\": \"version.toml\", \"format\": \"toml\"}]\n    }\n  ]\n}\n"
   },
   "packages": [
     {

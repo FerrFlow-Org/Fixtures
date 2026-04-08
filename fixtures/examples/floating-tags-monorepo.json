@@ -4,7 +4,7 @@
     "description": "Monorepo with per-package floating tags"
   },
   "config": {
-    "content": "{\n  \"workspace\": {\n    \"floating_tags\": true,\n    \"tag_template\": \"{name}@v{version}\"\n  },\n  \"package\": [\n    {\n      \"name\": \"core\",\n      \"path\": \"core\",\n      \"versioned_files\": [{\"path\": \"core/version.toml\", \"format\": \"toml\"}]\n    },\n    {\n      \"name\": \"cli\",\n      \"path\": \"cli\",\n      \"versioned_files\": [{\"path\": \"cli/version.toml\", \"format\": \"toml\"}]\n    }\n  ]\n}\n"
+    "content": "{\n  \"floating_tags\": [\"major\"],\n  \"tag_template\": \"{name}@v{version}\",\n  \"package\": [\n    {\n      \"name\": \"core\",\n      \"path\": \"core\",\n      \"versioned_files\": [{\"path\": \"core/version.toml\", \"format\": \"toml\"}]\n    },\n    {\n      \"name\": \"cli\",\n      \"path\": \"cli\",\n      \"versioned_files\": [{\"path\": \"cli/version.toml\", \"format\": \"toml\"}]\n    }\n  ]\n}\n"
   },
   "packages": [
     {
