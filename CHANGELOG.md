@@ -4,6 +4,12 @@ All notable changes to `fixtures` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.0.0] - 2026-04-15
+
+### Breaking Changes
+
+- chore!: switch license from MIT to MPL-2.0 (#83)
+
 ## [0.16.2] - 2026-04-08
 
 ### Bug Fixes
