@@ -4,6 +4,12 @@ All notable changes to `fixtures` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.0.1] - 2026-04-21
+
+### Bug Fixes
+
+- fix(ci): rebrand GHCR + GitHub URLs from ferrflow-org to ferrlabs (#87)
+
 ## [1.0.0] - 2026-04-15
 
 ### Breaking Changes
