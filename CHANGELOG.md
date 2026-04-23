@@ -4,6 +4,12 @@ All notable changes to `fixtures` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.0.2] - 2026-04-23
+
+### Bug Fixes
+
+- fix(deps): update rust crate toml to 0.9 (#90)
+
 ## [1.0.1] - 2026-04-21
 
 ### Bug Fixes
